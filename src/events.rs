@@ -1,5 +1,8 @@
-use std::path::PathBuf;
+// use std::path::PathBuf;
 
+pub use winit::{Event, TouchPhase, Touch, ScanCode, ElementState, MouseButton, MouseScrollDelta, VirtualKeyCode};
+
+/*
 #[derive(Clone, Debug)]
 pub enum Event {
     /// The size of the window has changed.
@@ -306,3 +309,4 @@ pub enum VirtualKeyCode {
     WebStop,
     Yen,
 }
+*/

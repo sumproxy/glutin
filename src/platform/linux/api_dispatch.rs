@@ -4,6 +4,8 @@ pub use api::x11::{WaitEventsIterator, PollEventsIterator};*/
 use std::collections::VecDeque;
 use std::sync::Arc;
 
+use winit;
+
 use ContextError;
 use CreationError;
 use CursorState;
@@ -133,7 +135,6 @@ impl MonitorId {
     }
 }
 
-
 pub enum PollEventsIterator<'a> {
     #[doc(hidden)]
     X(x11::PollEventsIterator<'a>),
@@ -174,10 +175,13 @@ impl<'a> Iterator for WaitEventsIterator<'a> {
 
 impl Window {
     #[inline]
-    pub fn new(window: &WindowAttributes, pf_reqs: &PixelFormatRequirements,
-               opengl: &GlAttributes<&Window>, _: &PlatformSpecificWindowBuilderAttributes)
-               -> Result<Window, CreationError>
-    {
+    pub fn new(
+        window: &WindowAttributes, // вот это надо бы убрать
+	pf_reqs: &PixelFormatRequirements,
+        opengl: &GlAttributes<&Window>,
+	_: &PlatformSpecificWindowBuilderAttributes, // и это, наверное, тоже убрать
+	ozkriff_window: &winit::Window,
+    ) -> Result<Window, CreationError> {
         match *BACKEND {
             Backend::Wayland => {
                 let opengl = opengl.clone().map_sharing(|w| match w {
@@ -193,8 +197,13 @@ impl Window {
                     &Window::X(ref w) => w,
                     _ => panic!()       // TODO: return an error
                 });
-
-                x11::Window::new(connec, window, pf_reqs, &opengl).map(Window::X)
+                x11::Window::new(
+                    connec,
+                    window,
+                    pf_reqs,
+                    &opengl,
+                    ozkriff_window,
+                ).map(Window::X)
             },
 
             Backend::Error(ref error) => Err(CreationError::NoBackendAvailable(Box::new(error.clone())))
@@ -403,7 +412,7 @@ unsafe extern "C" fn x_error_callback(dpy: *mut x11::ffi::Display, event: *mut x
 
     if let Backend::X(ref x) = *BACKEND {
         let mut buff: Vec<u8> = Vec::with_capacity(1024);
-        (x.xlib.XGetErrorText)(dpy, (*event).error_code as i32, buff.as_mut_ptr() as *mut libc::c_char, buff.capacity() as i32);
+        (x.w.xlib.XGetErrorText)(dpy, (*event).error_code as i32, buff.as_mut_ptr() as *mut libc::c_char, buff.capacity() as i32);
         let description = CStr::from_ptr(buff.as_mut_ptr() as *const libc::c_char).to_string_lossy();
 
         let error = XError {
@@ -413,7 +422,7 @@ unsafe extern "C" fn x_error_callback(dpy: *mut x11::ffi::Display, event: *mut x
             minor_code: (*event).minor_code,
         };
 
-        *x.latest_error.lock().unwrap() = Some(error);
+        *x.w.latest_error.lock().unwrap() = Some(error);
     }
 
     0

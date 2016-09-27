@@ -3,10 +3,12 @@
 extern crate android_glue;
 
 extern crate glutin;
+extern crate winit;
 
-use glutin::{Event, ElementState, MouseCursor};
+use glutin::{Event, ElementState};
+use winit::{MouseCursor};
 
-mod support;
+// mod support;
 
 #[cfg(target_os = "android")]
 android_start!(main);
@@ -16,8 +18,45 @@ fn main() {
     window.set_title("A fantastic window!");
     unsafe { window.make_current().unwrap() };
 
-    let context = support::load(&window);
-    let cursors = [MouseCursor::Default, MouseCursor::Crosshair, MouseCursor::Hand, MouseCursor::Arrow, MouseCursor::Move, MouseCursor::Text, MouseCursor::Wait, MouseCursor::Help, MouseCursor::Progress, MouseCursor::NotAllowed, MouseCursor::ContextMenu, MouseCursor::NoneCursor, MouseCursor::Cell, MouseCursor::VerticalText, MouseCursor::Alias, MouseCursor::Copy, MouseCursor::NoDrop, MouseCursor::Grab, MouseCursor::Grabbing, MouseCursor::AllScroll, MouseCursor::ZoomIn, MouseCursor::ZoomOut, MouseCursor::EResize, MouseCursor::NResize, MouseCursor::NeResize, MouseCursor::NwResize, MouseCursor::SResize, MouseCursor::SeResize, MouseCursor::SwResize, MouseCursor::WResize, MouseCursor::EwResize, MouseCursor::NsResize, MouseCursor::NeswResize, MouseCursor::NwseResize, MouseCursor::ColResize, MouseCursor::RowResize];
+    // let context = support::load(&window);
+    let cursors = [
+        MouseCursor::Default,
+        MouseCursor::Crosshair,
+        MouseCursor::Hand,
+        MouseCursor::Arrow,
+        MouseCursor::Move,
+        MouseCursor::Text,
+        MouseCursor::Wait,
+        MouseCursor::Help,
+        MouseCursor::Progress,
+        MouseCursor::NotAllowed,
+        MouseCursor::ContextMenu,
+        MouseCursor::NoneCursor,
+        MouseCursor::Cell,
+        MouseCursor::VerticalText,
+        MouseCursor::Alias,
+        MouseCursor::Copy,
+        MouseCursor::NoDrop,
+        MouseCursor::Grab,
+        MouseCursor::Grabbing,
+        MouseCursor::AllScroll,
+        MouseCursor::ZoomIn,
+        MouseCursor::ZoomOut,
+        MouseCursor::EResize,
+        MouseCursor::NResize,
+        MouseCursor::NeResize,
+        MouseCursor::NwResize,
+        MouseCursor::SResize,
+        MouseCursor::SeResize,
+        MouseCursor::SwResize,
+        MouseCursor::WResize,
+        MouseCursor::EwResize,
+        MouseCursor::NsResize,
+        MouseCursor::NeswResize,
+        MouseCursor::NwseResize,
+        MouseCursor::ColResize,
+        MouseCursor::RowResize,
+    ];
     let mut cursor_idx = 0;
 
     for event in window.wait_events() {
@@ -35,7 +74,7 @@ fn main() {
             _ => (),
         }
 
-        context.draw_frame((0.0, 1.0, 0.0, 1.0));
+        // context.draw_frame((0.0, 1.0, 0.0, 1.0));
         window.swap_buffers().unwrap();
     }
 }

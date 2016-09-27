@@ -62,7 +62,7 @@ impl XInputEventHandler {
         let xinput_str = CString::new("XInputExtension").unwrap();
 
         unsafe {
-            if (display.xlib.XQueryExtension)(display.display, xinput_str.as_ptr(), &mut opcode, &mut event, &mut error) == ffi::False {
+            if (display.w.xlib.XQueryExtension)(display.w.display, xinput_str.as_ptr(), &mut opcode, &mut event, &mut error) == ffi::False {
                 panic!("XInput not available")
             }
         }
@@ -71,7 +71,7 @@ impl XInputEventHandler {
         let mut xinput_minor_ver = ffi::XI_2_Minor;
 
         unsafe {
-            if (display.xinput2.XIQueryVersion)(display.display, &mut xinput_major_ver, &mut xinput_minor_ver) != ffi::Success as libc::c_int {
+            if (display.w.xinput2.XIQueryVersion)(display.w.display, &mut xinput_major_ver, &mut xinput_minor_ver) != ffi::Success as libc::c_int {
                 panic!("Unable to determine XInput version");
             }
         }
@@ -103,7 +103,7 @@ impl XInputEventHandler {
         }
 
         unsafe {
-            match (display.xinput2.XISelectEvents)(display.display, window, &mut input_event_mask, 1) {
+            match (display.w.xinput2.XISelectEvents)(display.w.display, window, &mut input_event_mask, 1) {
                 status if status as u8 == ffi::Success => (),
                 err => panic!("Failed to select events {:?}", err)
             }
@@ -131,7 +131,7 @@ impl XInputEventHandler {
         let state;
         if event.type_ == ffi::KeyPress {
             let raw_ev: *mut ffi::XKeyEvent = event;
-            unsafe { (self.display.xlib.XFilterEvent)(mem::transmute(raw_ev), self.window) };
+            unsafe { (self.display.w.xlib.XFilterEvent)(mem::transmute(raw_ev), self.window) };
             state = Pressed;
         } else {
             state = Released;
@@ -144,7 +144,7 @@ impl XInputEventHandler {
 
             let mut buffer: [u8; 16] = [mem::uninitialized(); 16];
             let raw_ev: *mut ffi::XKeyEvent = event;
-            let count = (self.display.xlib.Xutf8LookupString)(self.ic, mem::transmute(raw_ev),
+            let count = (self.display.w.xlib.Xutf8LookupString)(self.ic, mem::transmute(raw_ev),
             mem::transmute(buffer.as_mut_ptr()),
             buffer.len() as libc::c_int, &mut kp_keysym, ptr::null_mut());
 
@@ -156,7 +156,7 @@ impl XInputEventHandler {
         }
 
         let mut keysym = unsafe {
-            (self.display.xlib.XKeycodeToKeysym)(self.display.display, event.keycode as ffi::KeyCode, 0)
+            (self.display.w.xlib.XKeycodeToKeysym)(self.display.w.display, event.keycode as ffi::KeyCode, 0)
         };
 
         if (ffi::XK_KP_Space as libc::c_ulong <= keysym) && (keysym <= ffi::XK_KP_9 as libc::c_ulong) {
@@ -287,7 +287,7 @@ fn read_input_axis_info(display: &Arc<XConnection>) -> Vec<Axis> {
 
     // Check all input devices for scroll axes.
     let devices = unsafe{
-        (display.xinput2.XIQueryDevice)(display.display, ffi::XIAllDevices, &mut device_count)
+        (display.w.xinput2.XIQueryDevice)(display.w.display, ffi::XIAllDevices, &mut device_count)
     };
     for i in 0..device_count {
         let device = unsafe { *(devices.offset(i as isize)) };
@@ -317,7 +317,7 @@ fn read_input_axis_info(display: &Arc<XConnection>) -> Vec<Axis> {
     }
 
     unsafe {
-        (display.xinput2.XIFreeDeviceInfo)(devices);
+        (display.w.xinput2.XIFreeDeviceInfo)(devices);
     }
 
     axis_list

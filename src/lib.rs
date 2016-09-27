@@ -31,6 +31,8 @@ extern crate shared_library;
 
 extern crate libc;
 
+extern crate winit;
+
 #[cfg(target_os = "windows")]
 extern crate winapi;
 #[cfg(target_os = "windows")]
@@ -103,11 +105,14 @@ pub mod os;
 /// ```
 pub struct Window {
     window: platform::Window,
+    ozkriff_window: winit::Window, // TODO
 }
 
 /// Object that allows you to build windows.
-#[derive(Clone)]
+// #[derive(Clone)]
 pub struct WindowBuilder<'a> {
+    pub ozkriff_window: Option<winit::Window>,
+
     /// The attributes to use to create the window.
     pub window: WindowAttributes,
 
@@ -329,6 +334,9 @@ pub enum ReleaseBehavior {
     Flush,
 }
 
+pub use winit::MouseCursor;
+
+/*
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum MouseCursor {
     /// The platform-dependent default cursor.
@@ -384,7 +392,11 @@ pub enum MouseCursor {
     ColResize,
     RowResize,
 }
+*/
 
+pub use winit::CursorState;
+
+/*
 /// Describes how glutin handles the cursor.
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum CursorState {
@@ -401,6 +413,7 @@ pub enum CursorState {
     /// This is useful for first-person cameras for example.
     Grab,
 }
+*/
 
 /// Describes a possible format. Unused.
 #[allow(missing_docs)]
@@ -486,6 +499,8 @@ impl Default for PixelFormatRequirements {
     }
 }
 
+// pub use winit::WindowAttributes; // TODO
+
 /// Attributes to use when creating a window.
 #[derive(Clone)]
 pub struct WindowAttributes {
@@ -509,6 +524,7 @@ pub struct WindowAttributes {
     ///
     /// The default is `None`.
     pub monitor: Option<platform::MonitorId>,
+    // pub monitor: Option<winit::platform::MonitorId>, // TODO: 
 
     /// The title of the window in the title bar.
     ///

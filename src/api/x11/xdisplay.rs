@@ -6,20 +6,27 @@ use std::sync::Mutex;
 
 use libc;
 
+use winit;
+
 use super::ffi;
 use api::egl::ffi::egl::Egl;
 use api::dlopen;
 
 /// A connection to an X server.
 pub struct XConnection {
-    pub xlib: ffi::Xlib,
-    pub xf86vmode: ffi::Xf86vmode,
-    pub xcursor: ffi::Xcursor,
-    pub xinput2: ffi::XInput2,
+    // pub xlib: ffi::Xlib,
+    // pub xf86vmode: ffi::Xf86vmode,
+    // pub xcursor: ffi::Xcursor,
+    // pub xinput2: ffi::XInput2,
+    // pub display: *mut ffi::Display,
+    // pub latest_error: Mutex<Option<XError>>,
+
+    // TODO: rename
+    pub w: winit::api::x11::XConnection,
+
+    // оставить только эти поля
     pub glx: Option<ffi::glx::Glx>,
     pub egl: Option<Egl>,
-    pub display: *mut ffi::Display,
-    pub latest_error: Mutex<Option<XError>>,
 }
 
 unsafe impl Send for XConnection {}
@@ -30,13 +37,16 @@ pub type XErrorHandler = Option<unsafe extern fn(*mut ffi::Display, *mut ffi::XE
 impl XConnection {
     pub fn new(error_handler: XErrorHandler) -> Result<XConnection, XNotSupported> {
         // opening the libraries
-        let xlib = try!(ffi::Xlib::open());
-        let xcursor = try!(ffi::Xcursor::open());
-        let xf86vmode = try!(ffi::Xf86vmode::open());
-        let xinput2 = try!(ffi::XInput2::open());
+        // let xlib = try!(ffi::Xlib::open());
+        // let xcursor = try!(ffi::Xcursor::open());
+        // let xf86vmode = try!(ffi::Xf86vmode::open());
+        // let xinput2 = try!(ffi::XInput2::open());
 
+        // TODO мне вообще надо это делать или винит сам сделает? проверить
+        /*
         unsafe { (xlib.XInitThreads)() };
         unsafe { (xlib.XSetErrorHandler)(error_handler) };
+        */
 
         // TODO: use something safer than raw "dlopen"
         let glx = {
@@ -72,6 +82,7 @@ impl XConnection {
             }
         };
 
+        /*
         // calling XOpenDisplay
         let display = unsafe {
             let display = (xlib.XOpenDisplay)(ptr::null());
@@ -80,23 +91,39 @@ impl XConnection {
             }
             display
         };
+        */
+
+        // TODO: использовать то же, что и в platfrom/linux/..
+        unsafe extern "C" fn x_error_callback(
+            _dpy: *mut winit::api::x11::ffi::Display,
+            _event: *mut winit::api::x11::ffi::XErrorEvent,
+        ) -> libc::c_int {
+            unimplemented!();
+        }
+
+        // TODO: а можно еще попробовать передать None
+        // let w = winit::api::x11::XConnection::new(Some(x_error_callback)).unwrap();
+        let w = winit::api::x11::XConnection::new(None).unwrap();
 
         Ok(XConnection {
-            xlib: xlib,
-            xf86vmode: xf86vmode,
-            xcursor: xcursor,
-            xinput2: xinput2,
+            // xlib: xlib,
+            // xf86vmode: xf86vmode,
+            // xcursor: xcursor,
+            // xinput2: xinput2,
+            // display: display,
+            // latest_error: Mutex::new(None),
+
+            w: w,
+
             glx: glx,
             egl: egl,
-            display: display,
-            latest_error: Mutex::new(None),
         })
     }
 
     /// Checks whether an error has been triggered by the previous function calls.
     #[inline]
     pub fn check_errors(&self) -> Result<(), XError> {
-        let error = self.latest_error.lock().unwrap().take();
+        let error = self.w.latest_error.lock().unwrap().take();
 
         if let Some(error) = error {
             Err(error)
@@ -108,17 +135,21 @@ impl XConnection {
     /// Ignores any previous error.
     #[inline]
     pub fn ignore_error(&self) {
-        *self.latest_error.lock().unwrap() = None;
+        *self.w.latest_error.lock().unwrap() = None;
     }
 }
 
 impl Drop for XConnection {
     #[inline]
     fn drop(&mut self) {
-        unsafe { (self.xlib.XCloseDisplay)(self.display) };
+        // TODO: опять же, winit сделает это сам?
+        // unsafe { (self.xlib.XCloseDisplay)(self.w.display) };
     }
 }
 
+pub use winit::api::x11::XError;
+
+/*
 /// Error triggered by xlib.
 #[derive(Debug, Clone)]
 pub struct XError {
@@ -141,6 +172,7 @@ impl fmt::Display for XError {
                self.description, self.error_code, self.request_code, self.minor_code)
     }
 }
+*/
 
 /// Error returned if this system doesn't have XLib or can't create an X connection.
 #[derive(Clone, Debug)]
