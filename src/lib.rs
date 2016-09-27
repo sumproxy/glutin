@@ -104,8 +104,10 @@ pub mod os;
 /// }
 /// ```
 pub struct Window {
+    // TODO черт, мне кажется что не тут надо было второе окно создавать
+    // надо взять этот winit::Window и засунуть его внутрь platform::Window
     window: platform::Window,
-    ozkriff_window: winit::Window, // TODO
+    ozkriff_window: winit::Window,
 }
 
 /// Object that allows you to build windows.
