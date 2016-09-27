@@ -106,6 +106,7 @@ pub mod os;
 pub struct Window {
     // TODO черт, мне кажется что не тут надо было второе окно создавать
     // надо взять этот winit::Window и засунуть его внутрь platform::Window
+    // Только как? В том же линуксе platform::Window это перечисление. Блин, убейте меня, ничего ен понимаю.
     window: platform::Window,
     ozkriff_window: winit::Window,
 }
