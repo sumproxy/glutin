@@ -423,7 +423,9 @@ impl Window {
     /// Returns true if this context is the current one in this thread.
     #[inline]
     pub fn is_current(&self) -> bool {
-        self.window.is_current()
+        unimplemented!();
+        // временно отключил тут и в соседних функциях не ключевые вызовы
+        // self.window.is_current()
     }
 
     /// Returns the address of an OpenGL function.
@@ -444,6 +446,7 @@ impl Window {
     /// you can't know in advance whether `swap_buffers` will block or not.
     #[inline]
     pub fn swap_buffers(&self) -> Result<(), ContextError> {
+        // unimplemented!();
         self.window.swap_buffers()
     }
 
@@ -470,13 +473,15 @@ impl Window {
     /// - On Linux, it must be checked at runtime.
     #[inline]
     pub fn get_api(&self) -> Api {
-        self.window.get_api()
+        unimplemented!();
+        // self.window.get_api()
     }
 
     /// Returns the pixel format of this window.
     #[inline]
     pub fn get_pixel_format(&self) -> PixelFormat {
-        self.window.get_pixel_format()
+        unimplemented!();
+        // self.window.get_pixel_format()
     }
 
     /// Create a window proxy for this window, that can be freely
