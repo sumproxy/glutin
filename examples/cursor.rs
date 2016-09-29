@@ -8,7 +8,7 @@ extern crate winit;
 use glutin::{Event, ElementState};
 use winit::{MouseCursor};
 
-// mod support;
+mod support;
 
 #[cfg(target_os = "android")]
 android_start!(main);
@@ -18,7 +18,7 @@ fn main() {
     window.set_title("A fantastic window!");
     unsafe { window.make_current().unwrap() };
 
-    // let context = support::load(&window);
+    let context = support::load(&window);
     let cursors = [
         MouseCursor::Default,
         MouseCursor::Crosshair,
@@ -74,7 +74,7 @@ fn main() {
             _ => (),
         }
 
-        // context.draw_frame((0.0, 1.0, 0.0, 1.0));
+        context.draw_frame((0.0, 1.0, 0.0, 1.0));
         window.swap_buffers().unwrap();
     }
 }
