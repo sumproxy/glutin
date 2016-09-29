@@ -335,7 +335,7 @@ impl Window {
         };
 
         let screen_id = match window_attrs.monitor {
-            Some(PlatformMonitorId::X(MonitorId(_, monitor))) => monitor as i32,
+            Some(PlatformMonitorId::X(winit::api::x11::MonitorId(_, monitor))) => monitor as i32,
             _ => unsafe { (display.w.xlib.XDefaultScreen)(display.w.display) },
         };
 

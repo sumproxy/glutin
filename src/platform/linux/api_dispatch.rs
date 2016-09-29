@@ -72,6 +72,9 @@ impl WindowProxy {
     }
 }
 
+pub use winit::platform::{MonitorId, get_available_monitors, get_primary_monitor};
+
+/*
 #[derive(Clone)]
 pub enum MonitorId {
     #[doc(hidden)]
@@ -134,6 +137,7 @@ impl MonitorId {
         }
     }
 }
+*/
 
 pub enum PollEventsIterator<'a> {
     #[doc(hidden)]

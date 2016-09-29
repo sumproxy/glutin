@@ -526,7 +526,7 @@ pub struct WindowAttributes {
     /// If `Some`, the window will be in fullscreen mode with the given monitor.
     ///
     /// The default is `None`.
-    pub monitor: Option<platform::MonitorId>,
+    pub monitor: Option<winit::platform::MonitorId>,
     // pub monitor: Option<winit::platform::MonitorId>, // TODO: 
 
     /// The title of the window in the title bar.

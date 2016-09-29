@@ -14,7 +14,7 @@ use PixelFormat;
 use Robustness;
 use Window;
 use WindowBuilder;
-use native_monitor::NativeMonitorId;
+// use native_monitor::NativeMonitorId;
 
 use libc;
 use platform;
@@ -707,7 +707,7 @@ impl MonitorId {
 
     /// Returns the native platform identifier for this monitor.
     #[inline]
-    pub fn get_native_identifier(&self) -> NativeMonitorId {
+    pub fn get_native_identifier(&self) -> winit::NativeMonitorId {
         let &MonitorId(ref id) = self;
         id.get_native_identifier()
     }

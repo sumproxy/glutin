@@ -181,6 +181,8 @@ impl Window {
         };
 
         let shell_window = if let Some(PlatformMonitorId::Wayland(ref monitor_id)) = window.monitor {
+            unimplemented!();
+            /*
             let pid = super::monitor::proxid_from_monitorid(monitor_id);
             match wayland_context.plain_from(&egl_surface, Some(pid)) {
                 Some(mut s) => {
@@ -190,6 +192,7 @@ impl Window {
                 },
                 None => return Err(CreationError::NotSupported)
             }
+            */
         } else if window.decorations {
             match wayland_context.decorated_from(&egl_surface, w as i32, h as i32) {
                 Some(s) => ShellWindow::Decorated(s),
