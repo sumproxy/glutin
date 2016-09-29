@@ -16,6 +16,13 @@ use Window;
 use WindowBuilder;
 // use native_monitor::NativeMonitorId;
 
+pub use winit::WindowProxy;
+pub use winit::PollEventsIterator;
+pub use winit::WaitEventsIterator;
+pub use winit::{AvailableMonitorsIter};
+pub use winit::{get_primary_monitor, get_available_monitors};
+pub use winit::{MonitorId};
+
 use libc;
 use platform;
 
@@ -74,6 +81,7 @@ impl<'a> WindowBuilder<'a> {
         self
     }
 
+    /*
     /// Requests fullscreen mode.
     ///
     /// If you don't specify dimensions for the window, it will match the monitor's.
@@ -83,6 +91,7 @@ impl<'a> WindowBuilder<'a> {
         self.window.monitor = Some(monitor);
         self
     }
+    */
 
     /// The created window will share all its OpenGL objects with the window in the parameter.
     ///
@@ -423,9 +432,7 @@ impl Window {
     /// Returns true if this context is the current one in this thread.
     #[inline]
     pub fn is_current(&self) -> bool {
-        unimplemented!();
-        // временно отключил тут и в соседних функциях не ключевые вызовы
-        // self.window.is_current()
+        self.window.is_current()
     }
 
     /// Returns the address of an OpenGL function.
@@ -446,7 +453,6 @@ impl Window {
     /// you can't know in advance whether `swap_buffers` will block or not.
     #[inline]
     pub fn swap_buffers(&self) -> Result<(), ContextError> {
-        // unimplemented!();
         self.window.swap_buffers()
     }
 
@@ -473,15 +479,13 @@ impl Window {
     /// - On Linux, it must be checked at runtime.
     #[inline]
     pub fn get_api(&self) -> Api {
-        unimplemented!();
-        // self.window.get_api()
+        self.window.get_api()
     }
 
     /// Returns the pixel format of this window.
     #[inline]
     pub fn get_pixel_format(&self) -> PixelFormat {
-        unimplemented!();
-        // self.window.get_pixel_format()
+        self.window.get_pixel_format()
     }
 
     /// Create a window proxy for this window, that can be freely
@@ -588,134 +592,5 @@ impl GlContext for Window {
     #[inline]
     fn get_pixel_format(&self) -> PixelFormat {
         self.get_pixel_format()
-    }
-}
-
-pub use winit::WindowProxy;
-
-/*
-/// Represents a thread safe subset of operations that can be called
-/// on a window. This structure can be safely cloned and sent between
-/// threads.
-#[derive(Clone)]
-pub struct WindowProxy {
-    proxy: platform::WindowProxy,
-}
-
-impl WindowProxy {
-    /// Triggers a blocked event loop to wake up. This is
-    /// typically called when another thread wants to wake
-    /// up the blocked rendering thread to cause a refresh.
-    #[inline]
-    pub fn wakeup_event_loop(&self) {
-        self.proxy.wakeup_event_loop();
-    }
-}
-*/
-
-
-pub use winit::PollEventsIterator;
-
-/*
-/// An iterator for the `poll_events` function.
-pub struct PollEventsIterator<'a>(platform::PollEventsIterator<'a>);
-
-impl<'a> Iterator for PollEventsIterator<'a> {
-    type Item = Event;
-
-    #[inline]
-    fn next(&mut self) -> Option<Event> {
-        self.0.next()
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
-    }
-}
-*/
-
-pub use winit::WaitEventsIterator;
-
-/*
-/// An iterator for the `wait_events` function.
-pub struct WaitEventsIterator<'a>(platform::WaitEventsIterator<'a>);
-
-impl<'a> Iterator for WaitEventsIterator<'a> {
-    type Item = Event;
-
-    #[inline]
-    fn next(&mut self) -> Option<Event> {
-        self.0.next()
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.0.size_hint()
-    }
-}
-*/
-
-/// An iterator for the list of available monitors.
-// Implementation note: we retreive the list once, then serve each element by one by one.
-// This may change in the future.
-pub struct AvailableMonitorsIter {
-    data: VecDequeIter<platform::MonitorId>,
-}
-
-impl Iterator for AvailableMonitorsIter {
-    type Item = MonitorId;
-
-    #[inline]
-    fn next(&mut self) -> Option<MonitorId> {
-        self.data.next().map(|id| MonitorId(id))
-    }
-
-    #[inline]
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        self.data.size_hint()
-    }
-}
-
-// pub use winit::{get_primary_monitor, get_available_monitors};
-
-/// Returns the list of all available monitors.
-#[inline]
-pub fn get_available_monitors() -> AvailableMonitorsIter {
-    let data = platform::get_available_monitors();
-    AvailableMonitorsIter{ data: data.into_iter() }
-}
-
-/// Returns the primary monitor of the system.
-#[inline]
-pub fn get_primary_monitor() -> MonitorId {
-    MonitorId(platform::get_primary_monitor())
-}
-
-// pub use winit::{MonitorId};
-
-/// Identifier for a monitor.
-pub struct MonitorId(platform::MonitorId);
-
-impl MonitorId {
-    /// Returns a human-readable name of the monitor.
-    #[inline]
-    pub fn get_name(&self) -> Option<String> {
-        let &MonitorId(ref id) = self;
-        id.get_name()
-    }
-
-    /// Returns the native platform identifier for this monitor.
-    #[inline]
-    pub fn get_native_identifier(&self) -> winit::NativeMonitorId {
-        let &MonitorId(ref id) = self;
-        id.get_native_identifier()
-    }
-
-    /// Returns the number of pixels currently displayed on the monitor.
-    #[inline]
-    pub fn get_dimensions(&self) -> (u32, u32) {
-        let &MonitorId(ref id) = self;
-        id.get_dimensions()
     }
 }
