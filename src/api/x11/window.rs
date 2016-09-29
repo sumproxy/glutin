@@ -290,6 +290,9 @@ impl<'a> Iterator for WaitEventsIterator<'a> {
     }
 }
 
+// Эта структура полностью идентична винитовской.
+// Разница только с XConnection, который в XWindow
+// Так что надо осознать всю эту прокси-магию и аккуратно выпилить лишнее.
 pub struct Window {
     pub x: Arc<XWindow>,
     is_closed: AtomicBool,

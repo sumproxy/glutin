@@ -1,7 +1,6 @@
 /*pub use api::x11::{Window, WindowProxy, MonitorId, get_available_monitors, get_primary_monitor};
 pub use api::x11::{WaitEventsIterator, PollEventsIterator};*/
 
-use std::collections::VecDeque;
 use std::sync::Arc;
 
 use winit;
@@ -21,7 +20,6 @@ use libc;
 use api::wayland;
 use api::x11;
 use api::x11::XConnection;
-use api::x11::XError;
 use api::x11::XNotSupported;
 
 #[derive(Clone, Default)]
@@ -39,7 +37,7 @@ lazy_static!(
         if wayland::is_available() {
             Backend::Wayland
         } else {
-            match XConnection::new(Some(x_error_callback)) {
+            match XConnection::new() {
                 Ok(x) => Backend::X(Arc::new(x)),
                 Err(e) => Backend::Error(e),
             }
@@ -343,27 +341,3 @@ impl GlContext for Window {
         }
     }
 }
-
-unsafe extern "C" fn x_error_callback(dpy: *mut x11::ffi::Display, event: *mut x11::ffi::XErrorEvent)
-                                      -> libc::c_int
-{
-    use std::ffi::CStr;
-
-    if let Backend::X(ref x) = *BACKEND {
-        let mut buff: Vec<u8> = Vec::with_capacity(1024);
-        (x.w.xlib.XGetErrorText)(dpy, (*event).error_code as i32, buff.as_mut_ptr() as *mut libc::c_char, buff.capacity() as i32);
-        let description = CStr::from_ptr(buff.as_mut_ptr() as *const libc::c_char).to_string_lossy();
-
-        let error = XError {
-            description: description.into_owned(),
-            error_code: (*event).error_code,
-            request_code: (*event).request_code,
-            minor_code: (*event).minor_code,
-        };
-
-        *x.w.latest_error.lock().unwrap() = Some(error);
-    }
-
-    0
-}
-
