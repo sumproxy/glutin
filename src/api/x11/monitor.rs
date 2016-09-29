@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use std::sync::Arc;
 
 use super::XConnection;
-use native_monitor::NativeMonitorId;
+use winit::NativeMonitorId;
 
 // TODO: это вот точно надо заменить к фигам на winitовский тип!
 

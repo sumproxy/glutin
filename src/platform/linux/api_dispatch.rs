@@ -74,71 +74,6 @@ impl WindowProxy {
 
 pub use winit::platform::{MonitorId, get_available_monitors, get_primary_monitor};
 
-/*
-#[derive(Clone)]
-pub enum MonitorId {
-    #[doc(hidden)]
-    X(x11::MonitorId),
-    #[doc(hidden)]
-    Wayland(wayland::MonitorId),
-    #[doc(hidden)]
-    None,
-}
-
-#[inline]
-pub fn get_available_monitors() -> VecDeque<MonitorId> {
-    match *BACKEND {
-        Backend::Wayland => wayland::get_available_monitors()
-                                .into_iter()
-                                .map(MonitorId::Wayland)
-                                .collect(),
-        Backend::X(ref connec) => x11::get_available_monitors(connec)
-                                    .into_iter()
-                                    .map(MonitorId::X)
-                                    .collect(),
-        Backend::Error(_) => { let mut d = VecDeque::new(); d.push_back(MonitorId::None); d},
-    }
-}
-
-#[inline]
-pub fn get_primary_monitor() -> MonitorId {
-    match *BACKEND {
-        Backend::Wayland => MonitorId::Wayland(wayland::get_primary_monitor()),
-        Backend::X(ref connec) => MonitorId::X(x11::get_primary_monitor(connec)),
-        Backend::Error(_) => MonitorId::None,
-    }
-}
-
-impl MonitorId {
-    #[inline]
-    pub fn get_name(&self) -> Option<String> {
-        match self {
-            &MonitorId::X(ref m) => m.get_name(),
-            &MonitorId::Wayland(ref m) => m.get_name(),
-            &MonitorId::None => None,
-        }
-    }
-
-    #[inline]
-    pub fn get_native_identifier(&self) -> ::native_monitor::NativeMonitorId {
-        match self {
-            &MonitorId::X(ref m) => m.get_native_identifier(),
-            &MonitorId::Wayland(ref m) => m.get_native_identifier(),
-            &MonitorId::None => unimplemented!()        // FIXME:
-        }
-    }
-
-    #[inline]
-    pub fn get_dimensions(&self) -> (u32, u32) {
-        match self {
-            &MonitorId::X(ref m) => m.get_dimensions(),
-            &MonitorId::Wayland(ref m) => m.get_dimensions(),
-            &MonitorId::None => (800, 600),     // FIXME:
-        }
-    }
-}
-*/
-
 pub enum PollEventsIterator<'a> {
     #[doc(hidden)]
     X(x11::PollEventsIterator<'a>),
@@ -431,3 +366,4 @@ unsafe extern "C" fn x_error_callback(dpy: *mut x11::ffi::Display, event: *mut x
 
     0
 }
+

@@ -66,7 +66,7 @@ pub use events::*;
 pub use headless::{HeadlessRendererBuilder, HeadlessContext};
 pub use window::{WindowProxy, PollEventsIterator, WaitEventsIterator};
 pub use window::{AvailableMonitorsIter, MonitorId, get_available_monitors, get_primary_monitor};
-pub use native_monitor::NativeMonitorId;
+pub use winit::NativeMonitorId;
 
 use std::io;
 #[cfg(not(target_os = "macos"))]
@@ -639,18 +639,3 @@ impl<S> Default for GlAttributes<S> {
     }
 }
 
-mod native_monitor {
-    /// Native platform identifier for a monitor. Different platforms use fundamentally different types
-    /// to represent a monitor ID.
-    #[derive(Clone, PartialEq, Eq)]
-    pub enum NativeMonitorId {
-        /// Cocoa and X11 use a numeric identifier to represent a monitor.
-        Numeric(u32),
-
-        /// Win32 uses a Unicode string to represent a monitor.
-        Name(String),
-
-        /// Other platforms (Android) don't support monitor identification.
-        Unavailable
-    }
-}
