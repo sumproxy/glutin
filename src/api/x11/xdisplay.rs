@@ -25,12 +25,6 @@ pub type XErrorHandler = Option<unsafe extern fn(*mut ffi::Display, *mut ffi::XE
 
 impl XConnection {
     pub fn new(error_handler: XErrorHandler) -> Result<XConnection, XNotSupported> {
-        // TODO мне вообще надо это делать или винит сам сделает? проверить
-        /*
-        unsafe { (xlib.XInitThreads)() };
-        unsafe { (xlib.XSetErrorHandler)(error_handler) };
-        */
-
         // TODO: use something safer than raw "dlopen"
         let glx = {
             let mut libglx = unsafe { dlopen::dlopen(b"libGL.so.1\0".as_ptr() as *const _, dlopen::RTLD_NOW) };
@@ -66,7 +60,7 @@ impl XConnection {
         };
 
         // TODO: использовать то же, что и в platfrom/linux/..
-	/*
+        /*
         unsafe extern "C" fn x_error_callback(
             _dpy: *mut winit::api::x11::ffi::Display,
             _event: *mut winit::api::x11::ffi::XErrorEvent,
@@ -74,7 +68,7 @@ impl XConnection {
             unimplemented!();
         }
         let w = winit::api::x11::XConnection::new(Some(x_error_callback)).unwrap();
-	*/
+        */
 
         let w = winit::api::x11::XConnection::new(None).unwrap();
         Ok(XConnection {
@@ -100,14 +94,6 @@ impl XConnection {
     #[inline]
     pub fn ignore_error(&self) {
         *self.w.latest_error.lock().unwrap() = None;
-    }
-}
-
-impl Drop for XConnection {
-    #[inline]
-    fn drop(&mut self) {
-        // TODO: опять же, winit сделает это сам?
-        // unsafe { (self.xlib.XCloseDisplay)(self.w.display) };
     }
 }
 

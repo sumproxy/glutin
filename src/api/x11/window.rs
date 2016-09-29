@@ -91,26 +91,10 @@ unsafe impl Sync for Window {}
 impl Drop for XWindow {
     fn drop(&mut self) {
         unsafe {
-            // Clear out the window proxy data arc, so that any window proxy objects
-            // are no longer able to send messages to this window.
-            *self.window_proxy_data.lock().unwrap() = None;
-
             // we don't call MakeCurrent(0, 0) because we are not sure that the context
             // is still the current one
             self.context = Context::None;
 
-            let _lock = GLOBAL_XOPENIM_LOCK.lock().unwrap();
-
-            if self.is_fullscreen {
-                if let Some(mut xf86_desk_mode) = self.xf86_desk_mode {
-                    (self.display.w.xf86vmode.XF86VidModeSwitchToMode)(self.display.w.display, self.screen_id, &mut xf86_desk_mode);
-                }
-                (self.display.w.xf86vmode.XF86VidModeSetViewPort)(self.display.w.display, self.screen_id, 0, 0);
-            }
-
-            (self.display.w.xlib.XDestroyIC)(self.ic);
-            (self.display.w.xlib.XCloseIM)(self.im);
-            (self.display.w.xlib.XDestroyWindow)(self.display.w.display, self.window);
             (self.display.w.xlib.XFreeColormap)(self.display.w.display, self.colormap);
         }
     }
