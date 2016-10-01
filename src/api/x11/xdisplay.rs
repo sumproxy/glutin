@@ -1,13 +1,7 @@
 use std::ffi::CString;
-
-use winit;
-
-use super::ffi::glx::Glx;
+use api::x11::ffi::glx::Glx;
 use api::egl::ffi::egl::Egl;
 use api::dlopen;
-
-pub use winit::api::x11::XError;
-pub use winit::api::x11::XNotSupported;
 
 // TODO: rename
 pub struct GlenOrGlenda {
@@ -51,40 +45,5 @@ impl GlenOrGlenda {
             glx: glx,
             egl: egl,
         }
-    }
-}
-
-/// A connection to an X server.
-pub struct XConnection {
-    pub w: winit::api::x11::XConnection, // TODO: rename
-}
-
-unsafe impl Send for XConnection {}
-unsafe impl Sync for XConnection {}
-
-impl XConnection {
-    pub fn new() -> Result<XConnection, XNotSupported> {
-        // TODO: use something safer than raw "dlopen"
-        Ok(XConnection {
-            w: winit::api::x11::XConnection::new(None).unwrap(),
-        })
-    }
-
-    /// Checks whether an error has been triggered by the previous function calls.
-    #[inline]
-    pub fn check_errors(&self) -> Result<(), XError> {
-        let error = self.w.latest_error.lock().unwrap().take();
-
-        if let Some(error) = error {
-            Err(error)
-        } else {
-            Ok(())
-        }
-    }
-
-    /// Ignores any previous error.
-    #[inline]
-    pub fn ignore_error(&self) {
-        *self.w.latest_error.lock().unwrap() = None;
     }
 }

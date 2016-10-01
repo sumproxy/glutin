@@ -2,7 +2,10 @@
 
 pub use self::monitor::{MonitorId, get_available_monitors, get_primary_monitor};
 pub use self::window::{Window, XWindow, PollEventsIterator, WaitEventsIterator, Context, WindowProxy};
-pub use self::xdisplay::{XConnection, XNotSupported, XError};
+
+pub use winit::api::x11::XError;
+pub use winit::api::x11::XNotSupported;
+pub use winit::api::x11::XConnection;
 
 pub mod ffi;
 
