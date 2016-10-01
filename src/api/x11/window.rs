@@ -34,6 +34,8 @@ use super::input::XInputEventHandler;
 use super::{ffi};
 use super::{MonitorId, XConnection};
 
+use super::xdisplay::{GlenOrGlenda};
+
 // XOpenIM doesn't seem to be thread-safe
 lazy_static! {      // TODO: use a static mutex when that's possible, and put me back in my function
     static ref GLOBAL_XOPENIM_LOCK: Mutex<()> = Mutex::new(());
@@ -381,11 +383,12 @@ impl Window {
         }
         let builder_clone_opengl_glx = opengl.clone().map_sharing(|_| unimplemented!());      // FIXME:
         let builder_clone_opengl_egl = opengl.clone().map_sharing(|_| unimplemented!());      // FIXME:
+        let p9 = GlenOrGlenda::new();
         let context = match opengl.version {
             GlRequest::Latest | GlRequest::Specific(Api::OpenGl, _) | GlRequest::GlThenGles { .. } => {
                 // GLX should be preferred over EGL, otherwise crashes may occur
                 // on X11 – issue #314
-                if let Some(ref glx) = display.glx {
+                if let Some(ref glx) = p9.glx {
                     Prototype::Glx(try!(GlxContext::new(
                         glx.clone(),
                         &display.w.xlib,
@@ -395,7 +398,7 @@ impl Window {
                         screen_id,
                         ozkriff_window,
                     )))
-                } else if let Some(ref egl) = display.egl {
+                } else if let Some(ref egl) = p9.egl {
                     Prototype::Egl(try!(EglContext::new(
                             egl.clone(),
                         pf_reqs,
@@ -407,7 +410,7 @@ impl Window {
                 }
             },
             GlRequest::Specific(Api::OpenGlEs, _) => {
-                if let Some(ref egl) = display.egl {
+                if let Some(ref egl) = p9.egl {
                     Prototype::Egl(try!(EglContext::new(
                         egl.clone(),
                         pf_reqs,
