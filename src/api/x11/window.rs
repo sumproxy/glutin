@@ -125,14 +125,6 @@ pub struct XWindow {
     pub context: Context,
 }
 
-/*
-pub struct Ozkriff_XWindow {
-    // вот эти поля надо оставить, отсльное взять из winit::blablabla::XWindow
-    colormap: ffi::Colormap,
-    pub context: Context,
-}
-*/
-
 pub enum Context {
     Glx(GlxContext),
     Egl(EglContext),
@@ -1167,5 +1159,153 @@ impl GlContext for Window {
             Context::Egl(ref ctxt) => ctxt.get_pixel_format(),
             Context::None => panic!()
         }
+    }
+}
+
+pub struct Ozkriff_Window {
+    display: Arc<XConnection>, // нужен, что бы кое-какие функции для той же карты цветов вызвать
+    colormap: ffi::Colormap,
+    pub context: Context,
+}
+
+unsafe impl Send for Ozkriff_Window {}
+unsafe impl Sync for Ozkriff_Window {}
+
+impl Drop for Ozkriff_Window {
+    fn drop(&mut self) {
+        unsafe {
+            // we don't call MakeCurrent(0, 0) because we are not sure that the context
+            // is still the current one
+            self.context = Context::None;
+
+            (self.display.xlib.XFreeColormap)(self.display.display, self.colormap);
+        }
+    }
+}
+
+impl Ozkriff_Window {
+    pub fn new(
+        display: &Arc<XConnection>,
+        window_attrs: &WindowAttributes,
+        pf_reqs: &PixelFormatRequirements,
+        opengl: &GlAttributes<&Window>,
+        ozkriff_window: &winit::Window,
+    ) -> Result<Ozkriff_Window, CreationError> {
+        let ozkriff_x11: &winit::api::x11::XWindow = match ozkriff_window.window {
+            winit::platform::Window::X(ref w) => w.x.borrow(),
+            winit::platform::Window::Wayland(_) => unimplemented!(),
+        };
+        // let display = &ozkriff_x11.display; // TODO: OZKRIFF: плавно подменяем !
+
+        let screen_id = match window_attrs.monitor {
+            Some(PlatformMonitorId::X(winit::api::x11::MonitorId(_, monitor))) => monitor as i32,
+            _ => unsafe { (display.xlib.XDefaultScreen)(display.display) },
+        };
+
+
+
+        // start the context building process
+        enum Prototype<'a> {
+            Glx(::api::glx::ContextPrototype<'a>),
+            Egl(::api::egl::ContextPrototype<'a>),
+        }
+        let builder_clone_opengl_glx = opengl.clone().map_sharing(|_| unimplemented!());      // FIXME:
+        let builder_clone_opengl_egl = opengl.clone().map_sharing(|_| unimplemented!());      // FIXME:
+        let p9 = GlenOrGlenda::new();
+        let context = match opengl.version {
+            GlRequest::Latest | GlRequest::Specific(Api::OpenGl, _) | GlRequest::GlThenGles { .. } => {
+                // GLX should be preferred over EGL, otherwise crashes may occur
+                // on X11 – issue #314
+                if let Some(ref glx) = p9.glx {
+                    Prototype::Glx(try!(GlxContext::new(
+                        glx.clone(),
+                        &display.xlib,
+                        pf_reqs,
+                        &builder_clone_opengl_glx,
+                        display.display,
+                        screen_id,
+                        ozkriff_window,
+                    )))
+                } else if let Some(ref egl) = p9.egl {
+                    Prototype::Egl(try!(EglContext::new(
+                            egl.clone(),
+                        pf_reqs,
+                        &builder_clone_opengl_egl,
+                        egl::NativeDisplay::X11(Some(display.display as *const _)),
+                    )))
+                } else {
+                    return Err(CreationError::NotSupported);
+                }
+            },
+            GlRequest::Specific(Api::OpenGlEs, _) => {
+                if let Some(ref egl) = p9.egl {
+                    Prototype::Egl(try!(EglContext::new(
+                        egl.clone(),
+                        pf_reqs,
+                        &builder_clone_opengl_egl,
+                        egl::NativeDisplay::X11(Some(display.display as *const _)),
+                    )))
+                } else {
+                    return Err(CreationError::NotSupported);
+                }
+            },
+            GlRequest::Specific(_, _) => {
+                return Err(CreationError::NotSupported);
+            },
+        };
+
+        // getting the `visual_infos` (a struct that contains information about the visual to use)
+        let visual_infos = match context {
+            Prototype::Glx(ref p) => p.get_visual_infos().clone(),
+            Prototype::Egl(ref p) => {
+                unsafe {
+                    let mut template: ffi::XVisualInfo = mem::zeroed();
+                    template.visualid = p.get_native_visual_id() as ffi::VisualID;
+
+                    let mut num_visuals = 0;
+                    let vi = (display.xlib.XGetVisualInfo)(display.display, ffi::VisualIDMask,
+                                                           &mut template, &mut num_visuals);
+                    display.check_errors().expect("Failed to call XGetVisualInfo");
+                    assert!(!vi.is_null());
+                    assert!(num_visuals == 1);
+
+                    let vi_copy = ptr::read(vi as *const _);
+                    (display.xlib.XFree)(vi as *mut _);
+                    vi_copy
+                }
+            },
+        };
+
+        let window = ozkriff_x11.window;
+
+        // finish creating the OpenGL context
+        let context = match context {
+            Prototype::Glx(ctxt) => {
+                Context::Glx(try!(ctxt.finish(window)))
+            },
+            Prototype::Egl(ctxt) => {
+                Context::Egl(try!(ctxt.finish(window as *const libc::c_void)))
+            },
+        };
+
+        // getting the root window
+        let root = unsafe { (display.xlib.XDefaultRootWindow)(display.display) };
+        display.check_errors().expect("Failed to get root window");
+
+        // creating the color map
+        let cmap = unsafe {
+            let cmap = (display.xlib.XCreateColormap)(display.display, root,
+                                                      visual_infos.visual as *mut _,
+                                                      ffi::AllocNone);
+            display.check_errors().expect("Failed to call XCreateColormap");
+            cmap
+        };
+
+
+        Ok(Ozkriff_Window {
+            display: display.clone(),
+            context: context,
+            colormap: cmap,
+        })
     }
 }
