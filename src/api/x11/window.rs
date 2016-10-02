@@ -28,13 +28,16 @@ use api::glx::Context as GlxContext;
 use api::egl;
 use api::egl::Context as EglContext;
 
+use std::ffi::CString;
+use api::x11::ffi::glx::Glx;
+use api::egl::ffi::egl::Egl;
+use api::dlopen;
+
 use platform::MonitorId as PlatformMonitorId;
 
 use super::input::XInputEventHandler;
 use super::{ffi};
 use super::{MonitorId, XConnection};
-
-use super::xdisplay::{GlenOrGlenda};
 
 // XOpenIM doesn't seem to be thread-safe
 lazy_static! {      // TODO: use a static mutex when that's possible, and put me back in my function
@@ -43,9 +46,61 @@ lazy_static! {      // TODO: use a static mutex when that's possible, and put me
 
 // TODO: remove me
 fn with_c_str<F, T>(s: &str, f: F) -> T where F: FnOnce(*const libc::c_char) -> T {
-    use std::ffi::CString;
     let c_str = CString::new(s.as_bytes().to_vec()).unwrap();
     f(c_str.as_ptr())
+}
+
+// TODO: rename
+pub struct GlenOrGlenda {
+    pub glx: Option<Glx>,
+    pub egl: Option<Egl>,
+}
+
+impl GlenOrGlenda {
+    pub fn new() -> GlenOrGlenda {
+        // TODO: use something safer than raw "dlopen"
+        let glx = {
+            let mut libglx = unsafe {
+                dlopen::dlopen(b"libGL.so.1\0".as_ptr() as *const _, dlopen::RTLD_NOW)
+            };
+            if libglx.is_null() {
+                libglx = unsafe {
+                    dlopen::dlopen(b"libGL.so\0".as_ptr() as *const _, dlopen::RTLD_NOW)
+                };
+            }
+            if libglx.is_null() {
+                None
+            } else {
+                Some(Glx::load_with(|sym| {
+                    let sym = CString::new(sym).unwrap();
+                    unsafe { dlopen::dlsym(libglx, sym.as_ptr()) }
+                }))
+            }
+        };
+        // TODO: use something safer than raw "dlopen"
+        let egl = {
+            let mut libegl = unsafe {
+                dlopen::dlopen(b"libEGL.so.1\0".as_ptr() as *const _, dlopen::RTLD_NOW)
+            };
+            if libegl.is_null() {
+                libegl = unsafe {
+                    dlopen::dlopen(b"libEGL.so\0".as_ptr() as *const _, dlopen::RTLD_NOW)
+                };
+            }
+            if libegl.is_null() {
+                None
+            } else {
+                Some(Egl::load_with(|sym| {
+                    let sym = CString::new(sym).unwrap();
+                    unsafe { dlopen::dlsym(libegl, sym.as_ptr()) }
+                }))
+            }
+        };
+        GlenOrGlenda {
+            glx: glx,
+            egl: egl,
+        }
+    }
 }
 
 struct WindowProxyData {

@@ -13,4 +13,3 @@ mod events;
 mod input;
 mod monitor;
 mod window;
-mod xdisplay;
