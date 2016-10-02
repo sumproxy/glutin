@@ -1,20 +1,15 @@
-use std::collections::vec_deque::IntoIter as VecDequeIter;
 use std::default::Default;
 
 use Api;
 use ContextError;
 use CreationError;
-// use CursorState;
-// use Event;
 use GlContext;
 use GlProfile;
 use GlRequest;
-// use MouseCursor;
 use PixelFormat;
 use Robustness;
 use Window;
 use WindowBuilder;
-// use native_monitor::NativeMonitorId;
 
 pub use winit::WindowProxy;
 pub use winit::PollEventsIterator;

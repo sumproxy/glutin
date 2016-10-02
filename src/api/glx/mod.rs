@@ -17,7 +17,7 @@ use winit;
 use libc;
 use libc::c_int;
 use std::ffi::{CStr, CString};
-use std::{mem, ptr, slice};
+use std::{mem, ptr};
 
 use api::x11::ffi;
 
