@@ -112,14 +112,14 @@ impl Window {
     pub fn new(
         pf_reqs: &PixelFormatRequirements,
         opengl: &GlAttributes<&Window>,
-        ozkriff_window: &winit::Window,
+        winit_window: &winit::Window,
     ) -> Result<Window, CreationError> {
-        let ozkriff_x11: &winit::api::x11::XWindow = match ozkriff_window.window {
+        let winit_x11: &winit::api::x11::XWindow = match winit_window.window {
             winit::platform::Window::X(ref w) => w.x.borrow(),
             winit::platform::Window::Wayland(_) => unimplemented!(),
         };
-        let display = &ozkriff_x11.display;
-        let screen_id = ozkriff_x11.screen_id;
+        let display = &winit_x11.display;
+        let screen_id = winit_x11.screen_id;
 
         // start the context building process
         enum Prototype<'a> {
@@ -141,7 +141,7 @@ impl Window {
                         &builder_clone_opengl_glx,
                         display.display,
                         screen_id,
-                        ozkriff_window,
+                        winit_window,
                     )))
                 } else if let Some(ref egl) = backend.egl {
                     Prototype::Egl(try!(EglContext::new(
@@ -193,15 +193,13 @@ impl Window {
             },
         };
 
-        let window = ozkriff_x11.window;
-
         // finish creating the OpenGL context
         let context = match context {
             Prototype::Glx(ctxt) => {
-                Context::Glx(try!(ctxt.finish(window)))
+                Context::Glx(try!(ctxt.finish(winit_x11.window)))
             },
             Prototype::Egl(ctxt) => {
-                Context::Egl(try!(ctxt.finish(window as *const libc::c_void)))
+                Context::Egl(try!(ctxt.finish(winit_x11.window as *const libc::c_void)))
             },
         };
 
