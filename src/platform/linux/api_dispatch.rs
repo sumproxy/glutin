@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use winit;
 
 use ContextError;
@@ -11,16 +9,10 @@ use PixelFormatRequirements;
 use WindowAttributes;
 
 use api::wayland;
-use api::x11::{self, XConnection, XNotSupported};
+use api::x11;
 
 #[derive(Clone, Default)]
 pub struct PlatformSpecificWindowBuilderAttributes;
-
-enum Backend {
-    X(Arc<XConnection>),
-    Wayland,
-    Error(XNotSupported),
-}
 
 pub enum Window {
     #[doc(hidden)]
@@ -47,19 +39,16 @@ impl Window {
                     _ => panic!()       // TODO: return an error
                 });
                 x11::Window::new(
-                    window,
                     pf_reqs,
                     &opengl,
                     ozkriff_window,
                 ).map(Window::X)
-
             },
             winit::platform::Window::Wayland(_) => {
                 let opengl = opengl.clone().map_sharing(|w| match w {
                     &Window::Wayland(ref w) => w,
                     _ => panic!()       // TODO: return an error
                 });
-
                 wayland::Window::new(window, pf_reqs, &opengl).map(Window::Wayland)
             },
         }

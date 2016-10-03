@@ -13,7 +13,6 @@ use GlContext;
 use GlRequest;
 use PixelFormat;
 use PixelFormatRequirements;
-use WindowAttributes;
 
 use std::ffi::CString;
 
@@ -109,7 +108,6 @@ impl Drop for Window {
 
 impl Window {
     pub fn new(
-        window_attrs: &WindowAttributes, // TODO: убрать, лкно же уже создано
         pf_reqs: &PixelFormatRequirements,
         opengl: &GlAttributes<&Window>,
         ozkriff_window: &winit::Window,
@@ -118,12 +116,8 @@ impl Window {
             winit::platform::Window::X(ref w) => w.x.borrow(),
             winit::platform::Window::Wayland(_) => unimplemented!(),
         };
-        let display = &ozkriff_x11.display; // TODO: OZKRIFF: плавно подменяем !
-
-        let screen_id = match window_attrs.monitor {
-            Some(winit::platform::MonitorId::X(winit::api::x11::MonitorId(_, monitor))) => monitor as i32,
-            _ => unsafe { (display.xlib.XDefaultScreen)(display.display) },
-        };
+        let display = &ozkriff_x11.display;
+        let screen_id = ozkriff_x11.screen_id;
 
         // start the context building process
         enum Prototype<'a> {
