@@ -49,7 +49,12 @@ impl Window {
                     &Window::Wayland(ref w) => w,
                     _ => panic!()       // TODO: return an error
                 });
-                wayland::Window::new(window, pf_reqs, &opengl).map(Window::Wayland)
+                wayland::Window::new(
+                    window,
+                    pf_reqs,
+                    &opengl,
+                    ozkriff_window,
+                ).map(Window::Wayland)
             },
         }
     }

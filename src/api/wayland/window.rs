@@ -2,6 +2,8 @@ use std::collections::VecDeque;
 use std::ffi::CString;
 use std::sync::{Arc, Mutex};
 
+use winit;
+
 use libc;
 
 use {ContextError, CreationError, CursorState, Event, GlAttributes, GlContext,
@@ -28,16 +30,18 @@ impl WindowProxy {
 }
 
 pub struct Window {
-    wayland_context: &'static WaylandContext,
     egl_surface: wegl::WlEglSurface,
-    shell_window: Mutex<ShellWindow>,
-    evt_queue: Arc<Mutex<VecDeque<Event>>>,
-    inner_size: Mutex<(i32, i32)>,
-    resize_callback: Option<fn(u32, u32)>,
     pub context: EglContext,
+
+    // wayland_context: &'static WaylandContext,
+    // shell_window: Mutex<ShellWindow>,
+    // evt_queue: Arc<Mutex<VecDeque<Event>>>,
+    // inner_size: Mutex<(i32, i32)>,
+    // resize_callback: Option<fn(u32, u32)>,
 }
 
 impl Window {
+    /*
     fn next_event(&self) -> Option<Event> {
         use wayland_client::Event as WEvent;
         use wayland_client::wayland::WaylandProtocolEvent;
@@ -85,8 +89,10 @@ impl Window {
             evt_queue_guard.pop_front()
         }
     }
+    */
 }
 
+/*
 pub struct PollEventsIterator<'a> {
     window: &'a Window,
 }
@@ -135,12 +141,24 @@ enum ShellWindow {
     Plain(WlShellSurface, EventIterator),
     Decorated(DecoratedSurface)
 }
+*/
 
 impl Window {
-    pub fn new(window: &WindowAttributes, pf_reqs: &PixelFormatRequirements,
-               opengl: &GlAttributes<&Window>) -> Result<Window, CreationError>
-    {
+    pub fn new(
+        _: &WindowAttributes,
+        pf_reqs: &PixelFormatRequirements,
+        opengl: &GlAttributes<&Window>,
+        winit_window: &winit::Window,
+    ) -> Result<Window, CreationError> {
         use wayland_client::Proxy;
+
+
+        let winit_wayland: &winit::api::wayland::Window = match winit_window.window {
+            winit::platform::Window::X(_) => unimplemented!(),
+            winit::platform::Window::Wayland(ref w) => w,
+        };
+ 
+        /*
         // not implemented
         assert!(window.min_dimensions.is_none());
         assert!(window.max_dimensions.is_none());
@@ -155,12 +173,15 @@ impl Window {
         }
 
         let (w, h) = window.dimensions.unwrap_or((800, 600));
+        */
 
-        let (surface, evt_queue) = match wayland_context.new_surface() {
+        let (surface, _) = match winit_wayland.wayland_context.new_surface() {
             Some(t) => t,
             None => return Err(CreationError::NotSupported)
         };
 
+        let (w, h) = winit_wayland.get_inner_size().unwrap();
+        // let surface = winit_wayland.surface;
         let egl_surface = wegl::WlEglSurface::new(surface, w as i32, h as i32);
 
         let context = {
@@ -175,14 +196,13 @@ impl Window {
             try!(EglContext::new(
                 egl,
                 pf_reqs, &opengl.clone().map_sharing(|_| unimplemented!()),        // TODO: 
-                egl::NativeDisplay::Wayland(Some(wayland_context.display_ptr() as *const _)))
+                egl::NativeDisplay::Wayland(Some(winit_wayland.wayland_context.display_ptr() as *const _)))
                 .and_then(|p| p.finish(unsafe { egl_surface.egl_surfaceptr() } as *const _))
             )
         };
 
+        /*
         let shell_window = if let Some(PlatformMonitorId::Wayland(ref monitor_id)) = window.monitor {
-            unimplemented!();
-            /*
             let pid = super::monitor::proxid_from_monitorid(monitor_id);
             match wayland_context.plain_from(&egl_surface, Some(pid)) {
                 Some(mut s) => {
@@ -192,7 +212,6 @@ impl Window {
                 },
                 None => return Err(CreationError::NotSupported)
             }
-            */
         } else if window.decorations {
             match wayland_context.decorated_from(&egl_surface, w as i32, h as i32) {
                 Some(s) => ShellWindow::Decorated(s),
@@ -208,18 +227,23 @@ impl Window {
                 None => return Err(CreationError::NotSupported)
             }
         };
+            */
 
         Ok(Window {
-            wayland_context: wayland_context,
             egl_surface: egl_surface,
+            context: context
+
+            /*
+            wayland_context: wayland_context,
             shell_window: Mutex::new(shell_window),
             evt_queue: evt_queue,
             inner_size: Mutex::new((w as i32, h as i32)),
             resize_callback: None,
-            context: context
+            */
         })
     }
 
+    /*
     pub fn set_title(&self, title: &str) {
         let guard = self.shell_window.lock().unwrap();
         match *guard {
@@ -331,6 +355,7 @@ impl Window {
     pub fn platform_window(&self) -> *mut libc::c_void {
         unimplemented!()
     }
+    */
 }
 
 impl GlContext for Window {
@@ -365,9 +390,11 @@ impl GlContext for Window {
     }
 }
 
+/*
 impl Drop for Window {
     fn drop(&mut self) {
         use wayland_client::Proxy;
         self.wayland_context.dropped_surface((*self.egl_surface).id())
     }
 }
+*/
