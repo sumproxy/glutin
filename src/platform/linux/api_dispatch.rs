@@ -26,7 +26,7 @@ pub use winit::platform::{MonitorId, get_available_monitors, get_primary_monitor
 impl Window {
     #[inline]
     pub fn new(
-        window: &WindowAttributes, // вот это надо бы убрать
+        _: &WindowAttributes, // вот это надо бы убрать
         pf_reqs: &PixelFormatRequirements,
         opengl: &GlAttributes<&Window>,
         _: &PlatformSpecificWindowBuilderAttributes, // и это, наверное, тоже убрать
@@ -50,7 +50,6 @@ impl Window {
                     _ => panic!()       // TODO: return an error
                 });
                 wayland::Window::new(
-                    window,
                     pf_reqs,
                     &opengl,
                     ozkriff_window,
