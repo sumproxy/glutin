@@ -12,8 +12,6 @@ use PixelFormatRequirements;
 use ReleaseBehavior;
 use Robustness;
 
-use winit;
-
 use libc;
 use libc::c_int;
 use std::ffi::{CStr, CString};
@@ -40,16 +38,12 @@ fn with_c_str<F, T>(s: &str, f: F) -> T where F: FnOnce(*const libc::c_char) -> 
 
 impl Context {
     pub fn new<'a>(
-        glx: ffi::glx::Glx, // получить из winit
-        xlib: &ffi::Xlib, // получить из winit
-
+        glx: ffi::glx::Glx,
+        xlib: &ffi::Xlib,
         pf_reqs: &PixelFormatRequirements,
         opengl: &'a GlAttributes<&'a Context>,
-
-        display: *mut ffi::Display, // получить из winit
-        screen_id: libc::c_int, // получить из winit
-
-        ozkriff_window: &winit::Window,
+        display: *mut ffi::Display,
+        screen_id: libc::c_int,
 ) -> Result<ContextPrototype<'a>, CreationError> {
         // This is completely ridiculous, but VirtualBox's OpenGL driver needs some call handled by
         // *it* (i.e. not Mesa) to occur before anything else can happen. That is because

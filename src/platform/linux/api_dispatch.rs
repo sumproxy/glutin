@@ -11,6 +11,8 @@ use WindowAttributes;
 use api::wayland;
 use api::x11;
 
+use winit::os::unix::WindowExt;
+
 #[derive(Clone, Default)]
 pub struct PlatformSpecificWindowBuilderAttributes;
 
@@ -30,31 +32,29 @@ impl Window {
         pf_reqs: &PixelFormatRequirements,
         opengl: &GlAttributes<&Window>,
         _: &PlatformSpecificWindowBuilderAttributes, // и это, наверное, тоже убрать
-        ozkriff_window: &winit::Window,
+        winit_window: &winit::Window,
     ) -> Result<Window, CreationError> {
-        match ozkriff_window.window {
-            winit::platform::Window::X(_) => {
-                let opengl = opengl.clone().map_sharing(|w| match w {
-                    &Window::X(ref w) => w,
-                    _ => panic!()       // TODO: return an error
-                });
-                x11::Window::new(
-                    pf_reqs,
-                    &opengl,
-                    ozkriff_window,
-                ).map(Window::X)
-            },
-            winit::platform::Window::Wayland(_) => {
-                let opengl = opengl.clone().map_sharing(|w| match w {
-                    &Window::Wayland(ref w) => w,
-                    _ => panic!()       // TODO: return an error
-                });
-                wayland::Window::new(
-                    pf_reqs,
-                    &opengl,
-                    ozkriff_window,
-                ).map(Window::Wayland)
-            },
+        let is_x11 = winit_window.get_xlib_display().is_some();
+        if is_x11 {
+            let opengl = opengl.clone().map_sharing(|w| match w {
+                &Window::X(ref w) => w,
+                _ => panic!()       // TODO: return an error
+            });
+            x11::Window::new(
+                pf_reqs,
+                &opengl,
+                winit_window,
+            ).map(Window::X)
+        } else {
+            let opengl = opengl.clone().map_sharing(|w| match w {
+                &Window::Wayland(ref w) => w,
+                _ => panic!()       // TODO: return an error
+            });
+            wayland::Window::new(
+                pf_reqs,
+                &opengl,
+                winit_window,
+            ).map(Window::Wayland)
         }
     }
 }

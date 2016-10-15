@@ -108,13 +108,13 @@ pub struct Window {
     // надо взять этот winit::Window и засунуть его внутрь platform::Window
     // Только как? В том же линуксе platform::Window это перечисление. Блин, убейте меня, ничего ен понимаю.
     window: platform::Window,
-    ozkriff_window: winit::Window,
+    winit_window: winit::Window,
 }
 
 /// Object that allows you to build windows.
 // #[derive(Clone)]
 pub struct WindowBuilder<'a> {
-    pub ozkriff_window: Option<winit::Window>,
+    pub winit_window: Option<winit::Window>,
 
     /// The attributes to use to create the window.
     pub window: WindowAttributes,

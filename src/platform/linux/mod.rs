@@ -14,8 +14,6 @@ pub use self::api_dispatch::{Window, MonitorId, get_available_monitors, get_prim
 pub use self::api_dispatch::PlatformSpecificWindowBuilderAttributes;
 mod api_dispatch;
 
-// pub use winit::{MonitorId, get_available_monitors, get_primary_monitor};
-
 #[derive(Clone, Default)]
 pub struct PlatformSpecificHeadlessBuilderAttributes;
 

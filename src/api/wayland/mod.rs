@@ -2,6 +2,7 @@
 
 use std::ffi::CString;
 use winit;
+use winit::os::unix::WindowExt;
 use {ContextError, CreationError, GlAttributes, GlContext, PixelFormat, PixelFormatRequirements};
 use api::dlopen;
 use api::egl;
@@ -19,15 +20,12 @@ impl Window {
         opengl: &GlAttributes<&Window>,
         winit_window: &winit::Window,
     ) -> Result<Window, CreationError> {
-        let winit_wayland: &winit::api::wayland::Window = match winit_window.window {
-            winit::platform::Window::X(_) => unimplemented!(),
-            winit::platform::Window::Wayland(ref w) => w,
-        };
-        let (surface, _) = match winit_wayland.wayland_context.new_surface() {
+        let wayland_context = winit_window.get_wayland_context().unwrap();
+        let (surface, _) = match wayland_context.new_surface() {
             Some(t) => t,
             None => return Err(CreationError::NotSupported)
         };
-        let (w, h) = winit_wayland.get_inner_size().unwrap();
+        let (w, h) = winit_window.get_inner_size().unwrap();
         let egl_surface = wegl::WlEglSurface::new(surface, w as i32, h as i32);
         let context = {
             let libegl = unsafe { dlopen::dlopen(b"libEGL.so\0".as_ptr() as *const _, dlopen::RTLD_NOW) };
@@ -41,7 +39,7 @@ impl Window {
             try!(EglContext::new(
                 egl,
                 pf_reqs, &opengl.clone().map_sharing(|_| unimplemented!()),        // TODO: 
-                egl::NativeDisplay::Wayland(Some(winit_wayland.wayland_context.display_ptr() as *const _)))
+                egl::NativeDisplay::Wayland(Some(winit_window.get_wayland_display().unwrap())))
                 .and_then(|p| p.finish(unsafe { egl_surface.egl_surfaceptr() } as *const _))
             )
         };

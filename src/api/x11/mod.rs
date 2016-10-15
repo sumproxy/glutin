@@ -11,6 +11,7 @@ use std::{mem, ptr};
 use std::sync::{Arc};
 
 use winit;
+use winit::os::unix::WindowExt;
 
 use Api;
 use ContextError;
@@ -114,12 +115,8 @@ impl Window {
         opengl: &GlAttributes<&Window>,
         winit_window: &winit::Window,
     ) -> Result<Window, CreationError> {
-        let winit_x11: &winit::api::x11::XWindow = match winit_window.window {
-            winit::platform::Window::X(ref w) => w.x.borrow(),
-            winit::platform::Window::Wayland(_) => unimplemented!(),
-        };
-        let display = &winit_x11.display;
-        let screen_id = winit_x11.screen_id;
+        let display = winit_window.get_xlib_xconnection().unwrap();
+        let screen_id = winit_window.get_xlib_screen_id().unwrap() as _;
 
         // start the context building process
         enum Prototype<'a> {
@@ -141,7 +138,6 @@ impl Window {
                         &builder_clone_opengl_glx,
                         display.display,
                         screen_id,
-                        winit_window,
                     )))
                 } else if let Some(ref egl) = backend.egl {
                     Prototype::Egl(try!(EglContext::new(
@@ -193,13 +189,14 @@ impl Window {
             },
         };
 
+        let xlib_window = winit_window.get_xlib_window().unwrap();
         // finish creating the OpenGL context
         let context = match context {
             Prototype::Glx(ctxt) => {
-                Context::Glx(try!(ctxt.finish(winit_x11.window)))
+                Context::Glx(try!(ctxt.finish(xlib_window as _)))
             },
             Prototype::Egl(ctxt) => {
-                Context::Egl(try!(ctxt.finish(winit_x11.window as *const libc::c_void)))
+                Context::Egl(try!(ctxt.finish(xlib_window)))
             },
         };
 
