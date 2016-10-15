@@ -17,7 +17,8 @@ pub trait WindowExt {
 impl WindowExt for Window {
     #[inline]
     fn get_hwnd(&self) -> *mut libc::c_void {
-        self.window.platform_window()
+        // self.window.platform_window()
+        unimplemented!() // TODO: перенаправить виниту
     }
 }
 

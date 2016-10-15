@@ -1,8 +1,8 @@
 #![cfg(target_os = "windows")]
 
-pub use api::win32;
-pub use api::win32::{MonitorId, get_available_monitors, get_primary_monitor};
-pub use api::win32::{WindowProxy, PollEventsIterator, WaitEventsIterator};
+pub use api::win32::{self, MonitorId, WindowProxy};
+
+pub use winit::{get_available_monitors, get_primary_monitor};
 
 use Api;
 use ContextError;
@@ -12,6 +12,8 @@ use PixelFormatRequirements;
 use GlAttributes;
 use GlContext;
 use WindowAttributes;
+
+use winit;
 
 use api::egl::ffi::egl::Egl;
 use api::egl;
@@ -62,12 +64,20 @@ pub struct Window(win32::Window);
 impl Window {
     /// See the docs in the crate root file.
     #[inline]
-    pub fn new(window: &WindowAttributes, pf_reqs: &PixelFormatRequirements,
-               opengl: &GlAttributes<&Window>, _: &PlatformSpecificWindowBuilderAttributes)
-               -> Result<Window, CreationError>
-    {
-        win32::Window::new(window, pf_reqs, &opengl.clone().map_sharing(|w| &w.0),
-                           EGL.as_ref().map(|w| &w.0)).map(|w| Window(w))
+    pub fn new(
+        window: &WindowAttributes,
+        pf_reqs: &PixelFormatRequirements,
+        opengl: &GlAttributes<&Window>,
+        _: &PlatformSpecificWindowBuilderAttributes,
+        winit_window: &winit::Window,
+    ) -> Result<Window, CreationError> {
+        win32::Window::new(
+            window,
+            pf_reqs,
+            &opengl.clone().map_sharing(|w| &w.0),
+            EGL.as_ref().map(|w| &w.0),
+            winit_window,
+        ).map(|w| Window(w))
     }
 }
 
@@ -98,13 +108,14 @@ pub enum HeadlessContext {
 impl HeadlessContext {
     pub fn new(dimensions: (u32, u32), pf_reqs: &PixelFormatRequirements,
                opengl: &GlAttributes<&HeadlessContext>,
-               _: &PlatformSpecificHeadlessBuilderAttributes)
+               _: &PlatformSpecificHeadlessBuilderAttributes,
+               /*winit_window: &winit::Window*/) // TODO OZKRIFF
                -> Result<HeadlessContext, CreationError>
     {
         // if EGL is available, we try using EGL first
         // if EGL returns an error, we try the hidden window method
         if let &Some(ref egl) = &*EGL {
-            let context = EglContext::new(egl.0.clone(), pf_reqs, &opengl.clone().map_sharing(|_| unimplemented!()),       // TODO: 
+            let context = EglContext::new(egl.0.clone(), pf_reqs, &opengl.clone().map_sharing(|_| unimplemented!()),       // TODO:
                                           egl::NativeDisplay::Other(None))
                                 .and_then(|prototype| prototype.finish_pbuffer(dimensions))
                                 .map(|ctxt| HeadlessContext::EglPbuffer(ctxt));
@@ -114,10 +125,17 @@ impl HeadlessContext {
             }
         }
 
+        unimplemented!(); // TODO OZKRIFF
+        // эээ, наверное нет смысла для хедлес окна создавать винит-окно.
+        // но оно мне нужно, что бы вызвать у него метод platform_window =\
+        // иначе что я буду использовать при конструировании контекста?
+        /*
         let window = try!(win32::Window::new(&WindowAttributes { visible: false, .. Default::default() },
                                              pf_reqs, &opengl.clone().map_sharing(|_| unimplemented!()),            //TODO:
-                                             EGL.as_ref().map(|w| &w.0)));
+                                             EGL.as_ref().map(|w| &w.0),
+                                             winit_window));
         Ok(HeadlessContext::HiddenWindow(window))
+        */
     }
 }
 

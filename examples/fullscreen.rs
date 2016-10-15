@@ -33,7 +33,7 @@ fn main() {
 
     let window = glutin::WindowBuilder::new()
         .with_title("Hello world!")
-        .with_fullscreen(monitor)
+        // .with_fullscreen(monitor) // TODO: OZKRIFF
         .build()
         .unwrap();
 
