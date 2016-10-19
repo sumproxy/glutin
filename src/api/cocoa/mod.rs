@@ -73,7 +73,9 @@ impl Window {
             _ => ()
         }
         
-        let (context, pf) = match Window::create_context(**winit_window.get_native_nsview(), pf_reqs, opengl) {
+        let view = winit_window.get_nsview() as id;
+
+        let (context, pf) = match Window::create_context(view, pf_reqs, opengl) {
             Ok((context, pf)) => (context, pf),
             Err(e) => { return Err(OsError(format!("Couldn't create OpenGL context: {}", e))); },
         };
